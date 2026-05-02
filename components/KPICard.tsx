@@ -1,5 +1,7 @@
-import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useAppTheme } from "~/components/theme/AppThemeContext";
+import { LightColors, DarkColors } from "~/styles";
 
 type Trend = {
   value: string;
@@ -11,83 +13,91 @@ interface KPICardProps {
   value: string | number;
   icon: keyof typeof Ionicons.glyphMap;
   trend?: Trend;
-  color?: string;
-  bg?: string;
 }
 
-export function KPICard({
-  title,
-  value,
-  icon,
-  trend,
-  color = '#0F172A',
-  bg = '#F1F5F9',
-}: KPICardProps) {
+export function KPICard({ title, value, icon, trend }: KPICardProps) {
+  const { mode } = useAppTheme();
+  const colors = mode === "dark" ? DarkColors : LightColors;
+
   return (
-    <View style={[styles.card, { backgroundColor: bg }]}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: mode === "light" ? colors.border : "transparent",
+        },
+      ]}
+    >
       {/* Top row */}
       <View style={styles.topRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={[styles.value, { color }]}>{value}</Text>
+        <View>
+          <Text style={[styles.title, { color: colors.textSecondary }]}>
+            {title}
+          </Text>
+
+          <Text style={[styles.value, { color: colors.textPrimary }]}>
+            {value}
+          </Text>
         </View>
 
-        <Ionicons
-          name={icon}
-          size={20}
-          color={color}
-        />
+        <Ionicons name={icon} size={22} color={colors.textSecondary} />
       </View>
 
       {/* Trend */}
       {trend && (
-        <View style={styles.trendRow}>
-          <Text
-            style={[
-              styles.trendText,
-              { color: trend.positive ? '#16A34A' : '#DC2626' },
-            ]}
-          >
-            {trend.positive ? '↑' : '↓'} {trend.value}
-          </Text>
-        </View>
+        <Text
+          style={[
+            styles.trendText,
+            {
+              color: trend.positive ? colors.success : colors.destructive,
+            },
+          ]}
+        >
+          {trend.positive ? "↑" : "↓"} {trend.value}
+        </Text>
       )}
     </View>
   );
 }
 
-/* ---------------- STYLES ---------------- */
-
 const styles = StyleSheet.create({
   card: {
-    width: '47%',
+    width: "47%",
     padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 12,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
+
   topRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
   },
+
   title: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-    textTransform: 'uppercase',
-    marginBottom: 6,
+    fontWeight: "600",
+    textTransform: "uppercase",
     letterSpacing: 0.8,
+    marginBottom: 4,
   },
+
   value: {
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: "700",
   },
-  trendRow: {
-    marginTop: 4,
-  },
+
   trendText: {
+    marginTop: 6,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

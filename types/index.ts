@@ -1,10 +1,55 @@
-export type JobStatus = 
-  | "scheduled" 
-  | "en_route" 
-  | "in_progress" 
-  | "completed" 
+/** Roles returned by the API after login (TODO: map from /api/v1/me response) */
+export type UserRole =
+  | 'call_center'
+  | 'dispatcher'
+  | 'sales'
+  | 'technician'
+  | 'tech_lead'
+  | 'parts'
+  | 'finance'
+  | 'manager'
+  | 'admin';
+
+/** Which app layout to render for a given role */
+export type AppLayout = 'office' | 'tech' | 'parts' | 'finance' | 'manager' | 'admin';
+
+export function getRoleLayout(role: UserRole): AppLayout {
+  switch (role) {
+    case 'call_center':
+    case 'dispatcher':
+    case 'sales':     return 'office';
+    case 'technician':
+    case 'tech_lead': return 'tech';
+    case 'parts':     return 'parts';
+    case 'finance':   return 'finance';
+    case 'manager':   return 'manager';
+    case 'admin':     return 'admin';
+  }
+}
+
+export type JobStatus =
+  | "scheduled"
+  | "en_route"
+  | "in_progress"
+  | "completed"
   | "cancelled"
   | "estimate";
+
+/**
+ * Granular workflow status tracked only for the technician.
+ * Maps to a coarser JobStatus for the office view (see TECH_TO_SYSTEM_STATUS).
+ */
+export type TechWorkflowStatus =
+  | "on_the_way"
+  | "diagnostic"
+  | "need_parts"
+  | "parts_received"
+  | "need_new_parts"
+  | "parts_installed"
+  | "estimate_follow_up"
+  | "get_service_call_payment"
+  | "get_full_payment"
+  | "completed";
 
 export type PaymentStatus = "unpaid" | "partial" | "paid";
 
@@ -41,6 +86,8 @@ export interface Job {
   state: string;
   zip: string;
   distance?: string;
+  latitude?: number;
+  longitude?: number;
   estimatedDuration: number; // in minutes
   total: number;
   paid: number;
@@ -50,6 +97,7 @@ export interface Job {
   payments?: Payment[];
   items: JobItem[];
   tags: string[];
+  techWorkflowStatus?: TechWorkflowStatus;
   attachments?: number;
   servicePlan?: string;
   notes?: string;
@@ -127,6 +175,7 @@ export interface Message {
 export interface MessageThread {
   id: string;
   title: string;
+  phone?: string;
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
@@ -140,4 +189,33 @@ export interface User {
   role: "admin" | "dispatcher" | "technician";
   phone: string;
   avatar?: string;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Support / Helpdesk                                                  */
+/* ------------------------------------------------------------------ */
+
+export type SupportTicketStatus = "open" | "closed";
+
+export interface SupportTicket {
+  id: string;
+  deptId: string;         // which department this belongs to
+  jobId?: string;         // related job (optional)
+  jobNumber?: string;
+  clientName?: string;
+  subject: string;        // initial message / subject
+  status: SupportTicketStatus;
+  createdAt: string;
+  updatedAt: string;
+  unreadCount: number;
+}
+
+export interface SupportMessage {
+  id: string;
+  ticketId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: "tech" | "dept";   // who sent it
+  content: string;
+  timestamp: string;
 }

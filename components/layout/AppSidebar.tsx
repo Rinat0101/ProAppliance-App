@@ -1,227 +1,287 @@
-// components/layout/AppSidebar.tsx
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
   Pressable,
   Modal,
   StyleSheet,
-  SafeAreaView,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+
+import {
+  LightColors,
+  DarkColors,
+  Spacing,
+  Radius,
+  Typography,
+} from "~/styles";
+import { useAppTheme } from "~/components/theme/AppThemeContext";
 
 type SidebarItem = {
   title: string;
   icon: keyof typeof Ionicons.glyphMap;
-  route?: string; // we’ll enable later
+  route?: string;
 };
 
-type SidebarSection = {
-  label: string;
-  items: SidebarItem[];
+type AppSidebarProps = {
+  visible: boolean;
+  onClose: () => void;
+  onNavigate?: (route: string) => void;
 };
 
-const menuSections: SidebarSection[] = [
-  {
-    label: 'My Work',
-    items: [
-      { title: 'Home', icon: 'home-outline', route: '/' },
-      { title: 'Schedule', icon: 'calendar-outline', route: '/schedule' },
-      { title: 'Jobs', icon: 'briefcase-outline', route: '/jobs' },
-      { title: 'Activities', icon: 'checkbox-outline', route: '/activities' },
-    ],
-  },
-  {
-    label: 'Customers',
-    items: [
-      { title: 'Customers', icon: 'people-outline', route: '/customers' },
-      { title: 'Contacts', icon: 'person-add-outline', route: '/contacts' },
-    ],
-  },
-  {
-    label: 'Assets',
-    items: [
-      { title: 'Equipment', icon: 'construct-outline', route: '/equipment' },
-      { title: 'Inventory', icon: 'cube-outline', route: '/inventory' },
-      { title: 'Tools', icon: 'location-outline', route: '/tools' },
-    ],
-  },
-  {
-    label: 'Time Reporting',
-    items: [
-      { title: 'Time Tracking', icon: 'time-outline', route: '/time-tracking' },
-      { title: 'Reports', icon: 'document-text-outline', route: '/reports' },
-    ],
-  },
+const MAIN_ITEMS: SidebarItem[] = [
+  { title: "Jobs", icon: "briefcase-outline", route: "/jobs" },
+  { title: "Leads", icon: "sparkles-outline", route: "/leads" },
+  { title: "Invoices", icon: "receipt-outline", route: "/invoices" },
+  { title: "Estimates", icon: "document-text-outline", route: "/estimates" },
+  { title: "Expenses", icon: "wallet-outline", route: "/expenses" },
+];
+
+const SECONDARY_ITEMS: SidebarItem[] = [
+  { title: "Settings", icon: "settings-outline", route: "/settings" },
+  { title: "Help", icon: "help-circle-outline", route: "/help" },
 ];
 
 export function AppSidebar({
   visible,
   onClose,
   onNavigate,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onNavigate?: (route: string) => void; // optional for now
-}) {
-  // TEMP user until auth is added
-  const userEmail = 'mike.johnson@proappliance.com';
+}: AppSidebarProps) {
+  const { mode, toggleTheme } = useAppTheme();
+  const colors = mode === "dark" ? DarkColors : LightColors;
+
+  const userName = "Anastasiia Husieva";
+  const companyName = "ProAppliance";
+
+  const renderItem = (item: SidebarItem) => (
+    <Pressable
+      key={item.title}
+      style={styles.item}
+      onPress={() => {
+        if (item.route && onNavigate) onNavigate(item.route);
+        onClose();
+      }}
+    >
+      <View style={styles.itemLeft}>
+        <Ionicons
+          name={item.icon}
+          size={20}
+          color={colors.textPrimary}
+        />
+        <Text style={[styles.itemTitle, { color: colors.textPrimary }]}>
+          {item.title}
+        </Text>
+      </View>
+
+      <Ionicons
+        name="chevron-forward"
+        size={18}
+        color={colors.textTertiary}
+      />
+    </Pressable>
+  );
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      {/* Overlay */}
+    <Modal visible={visible} transparent animationType="fade">
+      {/* OVERLAY */}
       <Pressable style={styles.overlay} onPress={onClose} />
 
-      {/* Drawer */}
-      <SafeAreaView style={styles.drawer}>
-        <View style={styles.drawerInner}>
-          {/* Sections */}
-          <View style={styles.content}>
-            {menuSections.map((section) => (
-              <View key={section.label} style={styles.section}>
-                <Text style={styles.sectionLabel}>{section.label.toUpperCase()}</Text>
+      {/* DRAWER */}
+      <View style={[styles.drawer, { backgroundColor: colors.surface }]}>
+        {/* BRAND HEADER — extends to top */}
+        <View style={[styles.brandHeader, { backgroundColor: colors.header }]}>
+          <SafeAreaView edges={["top"]}>
+            <Text
+              style={[
+                styles.brandTitle,
+                { color: colors.headerForeground },
+              ]}
+            >
+              {companyName}
+            </Text>
+          </SafeAreaView>
+        </View>
 
-                {section.items.map((item) => (
-                  <Pressable
-                    key={item.title}
-                    style={styles.item}
-                    onPress={() => {
-                      // For now: no navigation (you said no other pages yet)
-                      // Later we’ll call onNavigate(item.route!)
-                      if (item.route && onNavigate) onNavigate(item.route);
-                      onClose();
-                    }}
-                  >
-                    <View style={styles.itemLeft}>
-                      <Ionicons name={item.icon} size={18} color="#0F172A" />
-                      <Text style={styles.itemTitle}>{item.title}</Text>
-                    </View>
+        {/* CONTENT */}
+        <View style={styles.content}>
+          {MAIN_ITEMS.map(renderItem)}
 
-                    <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-                  </Pressable>
-                ))}
-              </View>
-            ))}
-          </View>
+          <View
+            style={[
+              styles.divider,
+              { backgroundColor: colors.divider },
+            ]}
+          />
 
-          {/* Footer */}
-          <View style={styles.footer}>
-            <View style={styles.userRow}>
-              <View style={styles.userBadge}>
-                <Ionicons name="person-outline" size={16} color="#2563EB" />
-              </View>
-              <Text style={styles.userEmail} numberOfLines={1}>
-                {userEmail}
-              </Text>
+          {SECONDARY_ITEMS.map(renderItem)}
+        </View>
 
-              {/* Theme + Logout (stubs for now) */}
-              <Pressable
-                style={styles.iconBtn}
-                onPress={() => {
-                  // later: theme toggle
-                  console.log('Toggle theme');
-                }}
+        {/* FOOTER */}
+        <SafeAreaView
+          edges={["bottom"]}
+          style={[
+            styles.footer,
+            { borderTopColor: colors.divider },
+          ]}
+        >
+          <View style={styles.accountRow}>
+            <View style={styles.accountLeft}>
+              <View
+                style={[
+                  styles.avatar,
+                  { backgroundColor: colors.primaryLight },
+                ]}
               >
-                <Ionicons name="sunny-outline" size={18} color="#0F172A" />
+                <Ionicons
+                  name="person-outline"
+                  size={18}
+                  color={colors.primary}
+                />
+              </View>
+
+              <Text
+                style={[
+                  styles.userName,
+                  { color: colors.textPrimary },
+                ]}
+                numberOfLines={1}
+              >
+                {userName}
+              </Text>
+            </View>
+
+            <View style={styles.accountActions}>
+              {/* THEME TOGGLE */}
+              <Pressable style={styles.footerBtn} onPress={toggleTheme}>
+                <Ionicons
+                  name={mode === "dark" ? "sunny-outline" : "moon-outline"}
+                  size={18}
+                  color={colors.textPrimary}
+                />
               </Pressable>
 
+              {/* LOGOUT */}
               <Pressable
-                style={styles.iconBtn}
-                onPress={() => {
-                  // later: sign out
-                  console.log('Logout');
-                }}
+                style={styles.footerBtn}
+                onPress={() => console.log("Logout")}
               >
-                <Ionicons name="log-out-outline" size={18} color="#0F172A" />
+                <Ionicons
+                  name="log-out-outline"
+                  size={18}
+                  color={colors.textPrimary}
+                />
               </Pressable>
             </View>
           </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </View>
     </Modal>
   );
 }
 
+/* ---------------- STYLES ---------------- */
+
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: "rgba(0,0,0,0.35)",
   },
+
   drawer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     bottom: 0,
     left: 0,
-    width: '82%',
+    width: "82%",
     maxWidth: 360,
-    backgroundColor: '#FFFFFF',
   },
-  drawerInner: {
-    flex: 1,
+
+  /* BRAND */
+  brandHeader: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
+
+  brandTitle: {
+    ...Typography.h1,
+  },
+
   content: {
     flex: 1,
-    paddingHorizontal: 14,
-    paddingTop: 10,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
   },
-  section: {
-    marginBottom: 14,
-  },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#64748B',
-    marginBottom: 8,
-    paddingHorizontal: 6,
-  },
+
   item: {
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.lg,
   },
+
   itemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
   },
+
   itemTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0F172A',
+    ...Typography.body,
+    fontSize: 22,   
+    lineHeight: 30,
+    fontWeight: "500",
   },
+
+  divider: {
+    height: 1,
+    marginVertical: Spacing.lg,
+  },
+
   footer: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E2E8F0',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    padding: Spacing.md,
   },
-  userRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+
+  accountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-  userBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  userEmail: {
+
+  accountLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
     flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#0F172A',
   },
-  iconBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  userName: {
+    ...Typography.body,
+    fontWeight: "600",
+    flexShrink: 1,
+  },
+
+  accountActions: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+
+  footerBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

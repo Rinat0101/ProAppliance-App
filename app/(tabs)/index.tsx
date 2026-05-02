@@ -1,203 +1,163 @@
-import { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  StyleSheet,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { useState } from "react";
+import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { KPICard } from '~/components/KPICard';
-import { RadialFAB } from '~/components/RadialFAB';
-import { mockJobs } from '~/data/mockData';
+import { useAppTheme } from "~/components/theme/AppThemeContext";
+import { KPICard } from "~/components/KPICard";
+import { RadialFAB } from "~/components/fab/RadialFAB";
+import { AppHeader } from "~/components/layout/AppHeader";
+import { AppSidebar } from "~/components/layout/AppSidebar";
+import { mockJobs } from "~/data/mockData";
+
+import { LightColors, DarkColors } from "~/styles";
+import type { AppColors } from "~/styles/colors";
 
 /* ---------------- SCREEN ---------------- */
 
 export default function HomeScreen() {
-  const router = useRouter();
   const [selectedDate] = useState(new Date());
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const insets = useSafeAreaInsets();
 
-  const dateStr = selectedDate.toISOString().split('T')[0];
+  const { mode } = useAppTheme();
+  const colors = mode === "dark" ? DarkColors : LightColors;
 
-  const selectedJobs = mockJobs.filter(
-    (job) => job.scheduledDate === dateStr
-  );
+  const dateStr = selectedDate.toISOString().split("T")[0];
 
-  const selectedRevenue = selectedJobs.reduce(
-    (sum, job) => sum + job.total,
-    0
-  );
+  const selectedJobs = mockJobs.filter((job) => job.scheduledDate === dateStr);
 
-  const selectedSales = selectedJobs.reduce(
-    (sum, job) => sum + job.total,
-    0
-  );
+  const selectedRevenue = selectedJobs.reduce((sum, job) => sum + job.total, 0);
 
   const selectedPayments = selectedJobs.reduce((sum, job) => {
     const payments =
-      job.payments?.filter(
-        (p) => p.timestamp.split('T')[0] === dateStr
-      ) || [];
+      job.payments?.filter((p) => p.timestamp.split("T")[0] === dateStr) || [];
     return sum + payments.reduce((s, p) => s + p.amount, 0);
   }, 0);
 
   const estimatesOnDate = mockJobs.filter(
-    (job) => job.status === 'estimate' && job.scheduledDate === dateStr
+    (job) => job.status === "estimate" && job.scheduledDate === dateStr
   ).length;
 
   const jobsUndone = mockJobs.filter(
-    (job) => job.status !== 'completed'
+    (job) => job.status !== "completed"
   ).length;
 
   return (
-    <>
-      <ScrollView style={styles.container}>
-        {/* HEADER */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Dashboard</Text>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      {/* SIDEBAR */}
+      <AppSidebar visible={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-          <View style={styles.dateRow}>
-            <Ionicons
-              name="calendar-outline"
-              size={14}
-              color="rgba(255,255,255,0.7)"
-            />
-            <Text style={styles.dateText}>
-              {selectedDate.toDateString()}
-            </Text>
-          </View>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: 160 + insets.bottom },
+        ]}
+      >
+        {/* COMMON HEADER */}
+        <AppHeader title="Dashboard" onMenuPress={() => setSidebarOpen(true)} />
+
+        {/* DATE HEADER */}
+        <View style={[styles.dateHeader, { backgroundColor: colors.header }]}>
+          <Ionicons
+            name="calendar-outline"
+            size={14}
+            color={colors.headerForeground}
+            style={{ opacity: 0.7 }}
+          />
+          <Text style={[styles.dateText, { color: colors.headerForeground }]}>
+            {selectedDate.toDateString()}
+          </Text>
         </View>
 
         {/* CONTENT */}
         <View style={styles.content}>
           {/* KPI GRID */}
           <View style={styles.kpiGrid}>
-            <KPICard
-              title="Jobs"
-              value={selectedJobs.length}
-              icon="briefcase-outline"
-              trend={{ value: '+2 from yesterday', positive: true }}
-              color="#E35838"
-              bg="#FEF0E8"
-            />
+            <View style={styles.kpiGrid}>
+              <KPICard
+                title="Jobs"
+                value={selectedJobs.length}
+                icon="briefcase-outline"
+                trend={{ value: "+2 from yesterday", positive: true }}
+              />
 
-            <KPICard
-              title="Revenue"
-              value={`$${selectedRevenue.toFixed(0)}`}
-              icon="cash-outline"
-              trend={{ value: '+15% this week', positive: true }}
-              color="#1A6D4C"
-              bg="#E3F6EC"
-            />
+              <KPICard
+                title="Revenue"
+                value={`$${selectedRevenue.toFixed(0)}`}
+                icon="cash-outline"
+                trend={{ value: "+15% this week", positive: true }}
+              />
 
-            <KPICard
-              title="Sales"
-              value={`$${selectedSales.toFixed(0)}`}
-              icon="trending-up-outline"
-              trend={{ value: '+8% from yesterday', positive: true }}
-              color="#809FB4"
-              bg="#EFF4F8"
-            />
+              {/* 🔥 RESTORED */}
+              <KPICard
+                title="Sales"
+                value={`$${selectedRevenue.toFixed(0)}`}
+                icon="trending-up-outline"
+                trend={{ value: "+8% from yesterday", positive: true }}
+              />
 
-            <KPICard
-              title="Payments"
-              value={`$${selectedPayments.toFixed(0)}`}
-              icon="card-outline"
-              trend={{ value: '+12% this week', positive: true }}
-              color="#35536B"
-              bg="#E8F1F6"
-            />
+              <KPICard
+                title="Payments"
+                value={`$${selectedPayments.toFixed(0)}`}
+                icon="card-outline"
+                trend={{ value: "+12% this week", positive: true }}
+              />
 
-            <KPICard
-              title="Estimates"
-              value={estimatesOnDate}
-              icon="document-text-outline"
-              trend={{ value: '+3 this week', positive: true }}
-              color="#E35838"
-              bg="#FEF0E8"
-            />
+              <KPICard
+                title="Estimates"
+                value={estimatesOnDate}
+                icon="document-text-outline"
+                trend={{ value: "+3 this week", positive: true }}
+              />
 
-            <KPICard
-              title="Jobs Undone"
-              value={jobsUndone}
-              icon="time-outline"
-              trend={{ value: '-2 from yesterday', positive: false }}
-              color="#809FB4"
-              bg="#EFF4F8"
-            />
+              <KPICard
+                title="Jobs Undone"
+                value={jobsUndone}
+                icon="time-outline"
+                trend={{ value: "-2 from yesterday", positive: false }}
+              />
+            </View>
           </View>
 
           {/* TO DO */}
-          <View style={styles.todoSection}>
-            <Text style={styles.todoTitle}>TO DO</Text>
+          <View
+            style={[styles.todoSection, { backgroundColor: colors.surface }]}
+          >
+            <Text style={[styles.todoTitle, { color: colors.textSecondary }]}>
+              TO DO
+            </Text>
 
             <TodoItem
               icon="alert-circle-outline"
-              iconBg="#FEF0E8"
-              iconColor="#E35838"
+              iconBg={colors.muted}
+              iconColor={colors.destructive}
               title="Review changes requested"
               subtitle="3 quotes have changes requested"
-              onPress={() => {
-                console.log('TODO pressed');
-              }}
+              colors={colors}
             />
 
             <TodoItem
               icon="receipt-outline"
-              iconBg="#FFF4EA"
-              iconColor="#E35838"
+              iconBg={colors.muted}
+              iconColor={colors.primary}
               title="Follow up on past due invoices"
               subtitle="4 invoices are past due worth $15.5K"
-              onPress={() => {
-                console.log('TODO pressed');
-              }}
-            />
-
-            <TodoItem
-              icon="chatbubble-outline"
-              iconBg="#F0F6FF"
-              iconColor="#35536B"
-              title="Review new requests"
-              subtitle="2 new requests"
-              onPress={() => {
-                console.log('TODO pressed');
-              }}
-            />
-
-            <TodoItem
-              icon="construct-outline"
-              iconBg="#E8F6EE"
-              iconColor="#1A6D4C"
-              title="Review jobs needing action"
-              subtitle="3 jobs requiring action worth $950"
-              onPress={() => {
-                console.log('TODO pressed');
-              }}
-            />
-
-            <TodoItem
-              icon="calendar-outline"
-              iconBg="#EFF4F8"
-              iconColor="#35536B"
-              title="Create a schedule"
-              subtitle="See all your jobs at a glance"
-              onPress={() => {
-                console.log('TODO pressed');
-              }}
+              colors={colors}
             />
           </View>
         </View>
       </ScrollView>
 
-      {/* FLOATING ACTION BUTTON */}
-      <RadialFAB />
-    </>
+      {/* FAB */}
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        <RadialFAB variant="dashboard" />
+      </View>
+    </View>
   );
 }
 
-/* ---------------- COMPONENTS ---------------- */
+/* ---------------- TODO ITEM ---------------- */
 
 function TodoItem({
   icon,
@@ -205,31 +165,33 @@ function TodoItem({
   iconColor,
   title,
   subtitle,
-  onPress,
+  colors,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   iconBg: string;
   iconColor: string;
   title: string;
   subtitle: string;
-  onPress: () => void;
+  colors: AppColors;
 }) {
   return (
-    <Pressable style={styles.todoItem} onPress={onPress}>
+    <Pressable style={styles.todoItem}>
       <View style={[styles.todoIcon, { backgroundColor: iconBg }]}>
         <Ionicons name={icon} size={20} color={iconColor} />
       </View>
 
       <View style={{ flex: 1 }}>
-        <Text style={styles.todoItemTitle}>{title}</Text>
-        <Text style={styles.todoItemSubtitle}>{subtitle}</Text>
+        <Text style={[styles.todoItemTitle, { color: colors.textPrimary }]}>
+          {title}
+        </Text>
+        <Text
+          style={[styles.todoItemSubtitle, { color: colors.textSecondary }]}
+        >
+          {subtitle}
+        </Text>
       </View>
 
-      <Ionicons
-        name="chevron-forward"
-        size={20}
-        color="#94A3B8"
-      />
+      <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
     </Pressable>
   );
 }
@@ -237,77 +199,77 @@ function TodoItem({
 /* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
-  header: {
-    backgroundColor: '#1E293B',
+
+  scrollContent: {
+    paddingBottom: 120,
+  },
+
+  dateHeader: {
     paddingHorizontal: 16,
-    paddingTop: 16,
     paddingBottom: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-  },
-  headerTitle: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
-    marginTop: 6,
   },
+
   dateText: {
-    color: 'rgba(255,255,255,0.7)',
     fontSize: 12,
   },
+
   content: {
     paddingHorizontal: 16,
     paddingTop: 20,
-    paddingBottom: 100,
   },
+
   kpiGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 12,
     marginBottom: 24,
   },
+
   todoSection: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingVertical: 8,
   },
+
   todoTitle: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 8,
     paddingHorizontal: 16,
-    color: '#334155',
   },
+
   todoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+
   todoIcon: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
+
   todoItemTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#0F172A',
+    fontWeight: "600",
   },
+
   todoItemSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+  },
+
+  fabWrapper: {
+    position: "absolute",
+    right: 16,
   },
 });
